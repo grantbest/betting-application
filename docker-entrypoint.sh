@@ -14,6 +14,9 @@ echo "Database is up!"
 echo "Running database initialization (init_db.py)..."
 python init_db.py
 
+# If in development and rules are missing, we might want to seed full demo data
+# This can be handled by seed_db.py if desired
+
 # Execute the main application
 echo "Starting the engine..."
 exec python engine.py

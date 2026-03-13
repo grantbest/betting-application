@@ -3,6 +3,7 @@ import os
 import time
 import json
 from urllib.parse import urlparse
+from datetime import datetime, timedelta
 
 DEFAULT_RULES = [
     {
@@ -119,17 +120,58 @@ def init_database():
             conn.commit()
             print(f"✅ Database {db_name} initialized successfully with schema.sql")
             
-            # Check if rules exist, if not seed them
+            # Check if rules exist, if not seed them (Only in Development)
+            app_env = os.getenv("APP_ENV", "development")
             cur.execute("SELECT COUNT(*) FROM betting_rules")
-            if cur.fetchone()[0] == 0:
-                print("Seeding default betting rules...")
+            if cur.fetchone()[0] == 0 and app_env == "development":
+                print(f"Seeding demo rules for {app_env} environment...")
                 for rule in DEFAULT_RULES:
                     cur.execute(
                         "INSERT INTO betting_rules (name, description, status, conditions_json) VALUES (%s, %s, %s, %s)",
                         (rule['name'], rule['description'], rule['status'], json.dumps(rule['conditions_json']))
                     )
+                
+                # Also seed some demo history if in development
+                print("Seeding demo history (Inning Logs & Bet History)...")
+                
+                # Demo Teams
+                teams_data = [
+                    (110, 'BAL', 5), (114, 'CLE', 1), (119, 'LAD', 3), (136, 'SEA', 2)
+                ]
+                for team_id, abbr, rank in teams_data:
+                    cur.execute(
+                        "INSERT INTO teams (team_id, abbreviation, bullpen_era_rank) VALUES (%s, %s, %s) ON CONFLICT (team_id) DO NOTHING",
+                        (team_id, abbr, rank)
+                    )
+
+                # Demo Logs
+                logs = [
+                    (744880, 1, 'top', 1, 2, "BAL Vs NYY - 3/13"),
+                    (744880, 1, 'bottom', 2, 3, "BAL Vs NYY - 3/13"),
+                    (745201, 4, 'bottom', 0, 4, "LAD Vs SF - 3/13")
+                ]
+                for g_id, inn, half, runs, runners, info in logs:
+                    cur.execute(
+                        "INSERT INTO inning_logs (game_id, inning_number, half, runs_scored, baserunners, game_info) VALUES (%s, %s, %s, %s, %s, %s) ON CONFLICT DO NOTHING",
+                        (g_id, inn, half, runs, runners, info)
+                    )
+
+                # Demo History
+                history = [
+                    (744880, 'NR2I Regression', -115, 0.05, 'WON', "Low scoring environment with elite bullpen relief.", datetime.now() - timedelta(hours=2)),
+                    (746174, 'Big Inning Momentum', 105, 0.06, 'WON', "Momentum carried into the next frame as predicted.", datetime.now() - timedelta(hours=3)),
+                    (745201, '5th Inning Fatigue', -110, 0.03, 'PENDING', "Starter pitch count exceeds 85; 3rd time through order.", datetime.now() - timedelta(minutes=5))
+                ]
+                for g_id, sys, odds, stake, res, ai, dt in history:
+                    cur.execute(
+                        "INSERT INTO bet_tracking (game_id, system_triggered, odds_taken, stake, result, ai_insight, created_at) VALUES (%s, %s, %s, %s, %s, %s, %s)",
+                        (g_id, sys, odds, stake, res, ai, dt)
+                    )
+
                 conn.commit()
-                print(f"✅ Seeded {len(DEFAULT_RULES)} default rules.")
+                print(f"✅ Seeded demo data for {app_env} environment.")
+            else:
+                print(f"Skipping demo data seeding for {app_env} environment (or rules already exist).")
 
             cur.close()
             conn.close()
