@@ -1,0 +1,23 @@
+services:
+  engine:
+    environment:
+      APP_ENV: development
+      DB_NAME: mlb_engine_local
+      MLB_API_BASE_URL: http://mock_api:5000/api/v1
+    depends_on:
+      - mock_api
+
+  frontend:
+    environment:
+      APP_ENV: development
+      DATABASE_URL: postgresql://admin:password123@db:5432/mlb_engine_local
+      DEV_URL: https://dev.bestfam.us
+      PROD_URL: https://bestfam.us
+    ports:
+      - "3001:3000"
+
+  mock_api:
+    build: ./scripts/mock_api
+    container_name: mlb_mock_api
+    ports:
+      - "5001:5000"

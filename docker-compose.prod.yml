@@ -1,0 +1,20 @@
+services:
+  engine:
+    environment:
+      APP_ENV: production
+      DB_HOST: postgres
+      DB_NAME: homelab
+      DB_USER: postgres
+      DB_PASS: postgres
+      REDIS_HOST: redis
+    # Production uses live MLB API by default (no MLB_API_BASE_URL override)
+
+  frontend:
+    environment:
+      APP_ENV: production
+      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/homelab
+      DEV_URL: https://dev.bestfam.us
+      PROD_URL: https://bestfam.us
+      DISCORD_CHANNEL_URL: https://discord.com/channels/1234567890/1234567890
+    ports:
+      - "3000:3000"
