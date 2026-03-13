@@ -1,9 +1,13 @@
 services:
   engine:
     image: ghcr.io/grantbest/betting-application/engine:main
+    container_name: mlb_engine_prod
+    networks:
+      - homelab_global
     environment:
       APP_ENV: production
       DB_HOST: postgres
+      DB_PORT: 5432
       DB_NAME: homelab
       DB_USER: postgres
       DB_PASS: postgres
@@ -12,6 +16,9 @@ services:
 
   frontend:
     image: ghcr.io/grantbest/betting-application/frontend:main
+    container_name: mlb_frontend_prod
+    networks:
+      - homelab_global
     environment:
       APP_ENV: production
       DATABASE_URL: postgresql://postgres:postgres@postgres:5432/homelab
@@ -21,3 +28,7 @@ services:
     ports:
       - "3000:3000"
     restart: always
+
+networks:
+  homelab_global:
+    external: true

@@ -1,19 +1,30 @@
 services:
   engine:
     image: ghcr.io/grantbest/betting-application/engine:dev
+    container_name: mlb_engine_dev
+    networks:
+      - homelab_global
     environment:
       APP_ENV: development
-      DB_NAME: mlb_engine_local
-      MLB_API_BASE_URL: http://mock_api:5000/api/v1
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: homelab_dev
+      DB_USER: postgres
+      DB_PASS: postgres
+      REDIS_HOST: redis
+      MLB_API_BASE_URL: http://mlb_mock_api:5000/api/v1
     depends_on:
       - mock_api
     restart: always
 
   frontend:
     image: ghcr.io/grantbest/betting-application/frontend:dev
+    container_name: mlb_frontend_dev
+    networks:
+      - homelab_global
     environment:
       APP_ENV: development
-      DATABASE_URL: postgresql://admin:password123@db:5432/mlb_engine_local
+      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/homelab_dev
       DEV_URL: https://dev.bestfam.us
       PROD_URL: https://bestfam.us
     ports:
@@ -23,6 +34,12 @@ services:
   mock_api:
     image: ghcr.io/grantbest/betting-application/mock-api:dev
     container_name: mlb_mock_api
+    networks:
+      - homelab_global
     ports:
       - "5001:5000"
     restart: always
+
+networks:
+  homelab_global:
+    external: true
