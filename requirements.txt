@@ -1,0 +1,5 @@
+mlb-statsapi
+psycopg2-binary
+redis
+requests
+ollama
