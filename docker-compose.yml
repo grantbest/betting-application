@@ -49,6 +49,9 @@ services:
     environment:
       DATABASE_URL: postgresql://admin:password123@db:5432/mlb_engine_local
       APP_ENV: development
+      DEV_URL: https://dev.bestfam.us
+      PROD_URL: https://bestfam.us
+      DISCORD_CHANNEL_URL: https://discord.com/channels/1234567890/1234567890
     ports:
       - "3001:3000"
     depends_on:
