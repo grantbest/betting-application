@@ -2,6 +2,7 @@ import psycopg2
 import os
 import sys
 import random
+import json
 from datetime import datetime, timedelta
 
 # Database connection configuration (defaulting to local dev)
@@ -10,8 +11,16 @@ DB_NAME = os.getenv("DB_NAME", "mlb_engine")
 DB_USER = os.getenv("DB_USER", "admin")
 DB_PASS = os.getenv("DB_PASS", "password123")
 DB_PORT = os.getenv("DB_PORT", "5432")
+APP_ENV = os.getenv("APP_ENV", "development")
 
 def seed_data(teams_only=False):
+    # Security Check: Prevent accidental mock seeding in production
+    is_prod = APP_ENV == "production"
+    if is_prod and not teams_only:
+        print("⚠️  WARNING: You are trying to seed MOCK HISTORY in a PRODUCTION environment.")
+        print("Forcing --teams-only mode to protect production data integrity.")
+        teams_only = True
+
     conn = None
     try:
         conn = psycopg2.connect(
@@ -40,13 +49,17 @@ def seed_data(teams_only=False):
         ]
         cur.executemany("INSERT INTO teams (team_id, abbreviation, bullpen_era_rank) VALUES (%s, %s, %s)", teams_data)
 
-        # 2. Seed Betting Rules
+        # 2. Seed Betting Rules Engine
         print("Seeding Betting Rules Engine...")
         rules = [
-            ('NR2I Regression', 'Both teams score in 1st; Game Total <= 9 -> Target: No Run 2nd Inning', 'ACTIVE', '{"total_limit": 9, "first_inning_runs": "both"}'),
-            ('Big Inning Momentum', 'Previous inning had 3+ runs and 4+ baserunners -> Target: Yes Run Next Inning', 'ACTIVE', '{"min_runs": 3, "min_baserunners": 4}'),
-            ('5th Inning Fatigue', 'Game Total >= 9; Starter facing lineup 3rd time -> Target: Yes Run 5th Inning', 'ACTIVE', '{"total_limit": 9, "min_batters": 18}'),
-            ('Late Bullpen', 'Game within 3 runs; Both bullpens top-20 ERA -> Target: No Run 8th Inning', 'ACTIVE', '{"max_diff": 3, "max_bullpen_rank": 20}')
+            ('NR2I Regression', 'Both teams score in 1st; Game Total <= 9 -> Target: No Run 2nd Inning', 'ACTIVE', 
+             json.dumps({"logic": "AND", "conditions": [{"attribute": "inning", "operator": "==", "value": 2}, {"attribute": "runs_scored_half", "operator": "==", "value": 0}]})),
+            ('Big Inning Momentum', 'Previous inning had 3+ runs and 4+ baserunners -> Target: Yes Run Next Inning', 'ACTIVE', 
+             json.dumps({"logic": "AND", "conditions": [{"attribute": "runs_scored_half", "operator": ">=", "value": 3}, {"attribute": "baserunners", "operator": ">=", "value": 4}]})),
+            ('5th Inning Fatigue', 'Game Total >= 9; Starter facing lineup 3rd time -> Target: Yes Run 5th Inning', 'ACTIVE', 
+             json.dumps({"logic": "AND", "conditions": [{"attribute": "inning", "operator": "==", "value": 5}, {"attribute": "score_diff", "operator": ">=", "value": 0}]})),
+            ('Late Bullpen', 'Game within 3 runs; Both bullpens top-20 ERA -> Target: No Run 8th Inning', 'ACTIVE', 
+             json.dumps({"logic": "AND", "conditions": [{"attribute": "inning", "operator": "==", "value": 8}, {"attribute": "pitching_team_bullpen_rank", "operator": "<=", "value": 20}]}))
         ]
         cur.executemany("INSERT INTO betting_rules (name, description, status, conditions_json) VALUES (%s, %s, %s, %s)", rules)
 
@@ -77,7 +90,7 @@ def seed_data(teams_only=False):
             cur.executemany("INSERT INTO bet_tracking (game_id, system_triggered, odds_taken, stake, result, ai_insight, created_at) VALUES (%s, %s, %s, %s, %s, %s, %s)", history)
 
         conn.commit()
-        print(f"\n✅ {DB_NAME} seeded successfully!")
+        print(f"\n✅ {DB_NAME} seeded successfully (Environment: {APP_ENV})!")
 
     except Exception as e:
         print(f"❌ Error seeding database {DB_NAME}: {e}")

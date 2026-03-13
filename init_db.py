@@ -1,7 +1,59 @@
 import psycopg2
 import os
 import time
+import json
 from urllib.parse import urlparse
+
+DEFAULT_RULES = [
+    {
+        "name": "NR2I Regression",
+        "description": "Both teams score in 1st; Game Total <= 9 -> Target: No Run 2nd Inning",
+        "status": "ACTIVE",
+        "conditions_json": {
+            "logic": "AND",
+            "conditions": [
+                {"attribute": "inning", "operator": "==", "value": 2},
+                {"attribute": "runs_scored_half", "operator": "==", "value": 0}
+            ]
+        }
+    },
+    {
+        "name": "Big Inning Momentum",
+        "description": "Previous inning had 3+ runs and 4+ baserunners -> Target: Yes Run Next Inning",
+        "status": "ACTIVE",
+        "conditions_json": {
+            "logic": "AND",
+            "conditions": [
+                {"attribute": "runs_scored_half", "operator": ">=", "value": 3},
+                {"attribute": "baserunners", "operator": ">=", "value": 4}
+            ]
+        }
+    },
+    {
+        "name": "5th Inning Fatigue",
+        "description": "Game Total >= 9; Starter facing lineup 3rd time -> Target: Yes Run 5th Inning",
+        "status": "ACTIVE",
+        "conditions_json": {
+            "logic": "AND",
+            "conditions": [
+                {"attribute": "inning", "operator": "==", "value": 5},
+                {"attribute": "score_diff", "operator": ">=", "value": 0}
+            ]
+        }
+    },
+    {
+        "name": "Late Bullpen",
+        "description": "Game within 3 runs; Both bullpens top-20 ERA -> Target: No Run 8th Inning",
+        "status": "ACTIVE",
+        "conditions_json": {
+            "logic": "AND",
+            "conditions": [
+                {"attribute": "inning", "operator": "==", "value": 8},
+                {"attribute": "pitching_team_bullpen_rank", "operator": "<=", "value": 20}
+            ]
+        }
+    }
+]
 
 def init_database():
     """
@@ -67,6 +119,18 @@ def init_database():
             conn.commit()
             print(f"✅ Database {db_name} initialized successfully with schema.sql")
             
+            # Check if rules exist, if not seed them
+            cur.execute("SELECT COUNT(*) FROM betting_rules")
+            if cur.fetchone()[0] == 0:
+                print("Seeding default betting rules...")
+                for rule in DEFAULT_RULES:
+                    cur.execute(
+                        "INSERT INTO betting_rules (name, description, status, conditions_json) VALUES (%s, %s, %s, %s)",
+                        (rule['name'], rule['description'], rule['status'], json.dumps(rule['conditions_json']))
+                    )
+                conn.commit()
+                print(f"✅ Seeded {len(DEFAULT_RULES)} default rules.")
+
             cur.close()
             conn.close()
             break
