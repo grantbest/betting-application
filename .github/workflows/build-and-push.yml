@@ -58,33 +58,3 @@ jobs:
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-
-  deploy:
-    needs: build-and-push
-    runs-on: [self-hosted, macOS, X64]
-    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/dev')
-    
-    steps:
-      - name: Remote Deployment Trigger
-        uses: appleboy/ssh-action@v1.0.3
-        with:
-          host: ${{ github.ref == 'refs/heads/main' && secrets.PROD_SSH_HOST || secrets.DEV_SSH_HOST }}
-          username: ${{ github.ref == 'refs/heads/main' && secrets.PROD_SSH_USER || secrets.DEV_SSH_USER }}
-          key: ${{ github.ref == 'refs/heads/main' && secrets.PROD_SSH_KEY || secrets.DEV_SSH_KEY }}
-          script: |
-            # Navigate to the HOME LAB path
-            cd ~/homelab/apps/betting-engine
-            
-            # HARD SYNC: Force the server to match the repo exactly
-            # This wipes any local "hand-tweaks" that would normally block a git pull
-            git fetch --all
-            git reset --hard origin/main
-            
-            # Determine which override to use
-            OVERRIDE_FILE="docker-compose.${{ github.ref_name }}.yml"
-            
-            # Pull the latest images and force a recreation of the entire stack
-            # --remove-orphans ensures old/renamed services are cleaned up
-            docker compose -f docker-compose.yml -f $OVERRIDE_FILE pull
-            docker compose -f docker-compose.yml -f $OVERRIDE_FILE up -d --force-recreate --remove-orphans
-
