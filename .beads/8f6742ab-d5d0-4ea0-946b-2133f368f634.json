@@ -1,0 +1,12 @@
+{
+    "id": "8f6742ab-d5d0-4ea0-946b-2133f368f634",
+    "title": "Test Deployment Task",
+    "description": "Troubleshoot why the Betting App is not responding on bestfam.us",
+    "status": "completed",
+    "requesting_agent": "Orchestrator",
+    "assigned_agent": "betting-agent",
+    "created_at": "2026-03-13T21:27:35.148656",
+    "updated_at": "2026-03-13T22:10:30.875725",
+    "context": {},
+    "resolution": "Simulated task completion by agent."
+}
