@@ -175,6 +175,9 @@ export default function Dashboard() {
               }`}>
                 {currentEnv}
               </span>
+              <span className="text-[10px] font-bold text-slate-600 bg-slate-900 px-1.5 py-0.5 rounded border border-slate-800">
+                v1.2
+              </span>
             </div>
             <p className="text-slate-400 mt-1 text-sm md:text-base">Real-time management & analytics dashboard.</p>
           </div>
