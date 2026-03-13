@@ -75,6 +75,9 @@ jobs:
             # Navigate to the HOME LAB path
             cd ~/homelab/apps/betting-engine
             
+            # Pull the latest configuration files (including docker-compose.main.yml)
+            git pull origin main
+            
             # Determine which override to use
             OVERRIDE_FILE="docker-compose.${{ github.ref_name }}.yml"
             
