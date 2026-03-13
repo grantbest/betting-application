@@ -72,12 +72,15 @@ jobs:
           username: ${{ github.ref == 'refs/heads/main' && secrets.PROD_SSH_USER || secrets.DEV_SSH_USER }}
           key: ${{ github.ref == 'refs/heads/main' && secrets.PROD_SSH_KEY || secrets.DEV_SSH_KEY }}
           script: |
-            # Navigate to the HOME LAB path, not the app path
+            # Navigate to the HOME LAB path
             cd ~/homelab/apps/betting-engine
             
-            # Pull the new image we just built
-            docker compose pull
+            # Determine which override to use
+            OVERRIDE_FILE="docker-compose.${{ github.ref_name }}.yml"
             
-            # Restart the service with the new image
-            docker compose up -d
+            # Pull the new image we just built
+            docker compose -f docker-compose.yml -f $OVERRIDE_FILE pull
+            
+            # Restart the service with the environment-specific override
+            docker compose -f docker-compose.yml -f $OVERRIDE_FILE up -d --force-recreate
 
