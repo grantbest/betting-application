@@ -28,10 +28,12 @@ services:
     container_name: mlb_engine_local
     environment:
       DB_HOST: db
+      DB_PORT: 5432
       DB_NAME: mlb_engine_local
       DB_USER: admin
       DB_PASS: password123
       REDIS_HOST: redis
+      REDIS_PORT: 6379
       MLB_API_BASE_URL: http://mock_api:5000/api/v1
       OLLAMA_BASE_URL: http://host.docker.internal:11434
     depends_on:
@@ -48,7 +50,7 @@ services:
       DATABASE_URL: postgresql://admin:password123@db:5432/mlb_engine_local
       APP_ENV: development
     ports:
-      - "3000:3000"
+      - "3001:3000"
     depends_on:
       - db
 
