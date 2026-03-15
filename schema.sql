@@ -55,3 +55,11 @@ CREATE TABLE IF NOT EXISTS system_settings (
 INSERT INTO system_settings (setting_key, setting_value) 
 VALUES ('discord_webhook_url', 'https://discord.com/api/webhooks/placeholder')
 ON CONFLICT (setting_key) DO NOTHING;
+-- Agent Chat Table for Remote Interaction
+CREATE TABLE IF NOT EXISTS agent_chat (
+    message_id SERIAL PRIMARY KEY,
+    role VARCHAR(20) NOT NULL, -- 'user' or 'agent'
+    content TEXT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+

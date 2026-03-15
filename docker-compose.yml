@@ -7,7 +7,7 @@ services:
       POSTGRES_PASSWORD: password123
       POSTGRES_DB: mlb_engine_local
     ports:
-      - "5432:5432"
+      - "5433:5432"
     volumes:
       - postgres_data_local:/var/lib/postgresql/data
 

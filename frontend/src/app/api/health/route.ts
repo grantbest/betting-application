@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
-import { Client } from "@temporalio/client";
+import { Connection, Client } from "@temporalio/client";
 import { createClient } from "redis";
 import postgres from "postgres";
+import fs from "fs";
 
 export async function GET() {
   const healthData: any = {
@@ -36,7 +37,8 @@ export async function GET() {
 
   // 3. Orchestration (Temporal)
   try {
-    const client = await Client.connect({ address: "temporal:7233" });
+    const connection = await Connection.connect({ address: "temporal:7233" });
+    const client = new Client({ connection });
     await client.workflowService.getSystemInfo({});
     healthData.infra.temporal = "HEALTHY";
   } catch (err) {
@@ -44,14 +46,11 @@ export async function GET() {
   }
 
   // 4. App Context (Beads)
-  // Since we are server-side in Next.js, we can scan the shared .beads volume/dir
   try {
-    const fs = require("fs");
-    const path = require("path");
-    const beadsDir = "/app/.beads"; // Assuming it is mounted in the container
+    const beadsDir = "/app/.beads";
     if (fs.existsSync(beadsDir)) {
       const files = fs.readdirSync(beadsDir);
-      healthData.agents.pending_beads = files.length; // Simple count for now
+      healthData.agents.pending_beads = files.length;
     }
   } catch (err) {
     healthData.agents.error = "COULD_NOT_READ_BEADS";
