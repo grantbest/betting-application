@@ -15,7 +15,9 @@ import {
   Cpu,
   BrainCircuit,
   MessageSquare,
-  ChevronRight
+  ChevronRight,
+  Thermometer,
+  Wind
 } from 'lucide-react';
 import Link from 'next/link';
 import { 
@@ -154,6 +156,15 @@ export default function Dashboard() {
     { name: 'NR2I Regression', wins: bets.filter(b => b.system_triggered === 'NR2I Regression' && b.result === 'WON').length },
     { name: 'Big Inning Momentum', wins: bets.filter(b => b.system_triggered === 'Big Inning Momentum' && b.result === 'WON').length },
   ];
+
+  const parseWeather = (gameInfo: string | undefined) => {
+    if (!gameInfo) return null;
+    const parts = gameInfo.split(' | ');
+    if (parts.length < 2) return null;
+    const temp = parts.find(p => p.includes('🌡️'))?.replace('🌡️', '').trim();
+    const wind = parts.find(p => p.includes('💨'))?.replace('💨', '').trim();
+    return { temp, wind, cleanTitle: parts[0] };
+  };
 
   const currentEnv = config?.appEnv || 'development';
   const isProd = currentEnv === 'production';
@@ -374,15 +385,28 @@ export default function Dashboard() {
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-800 font-mono text-sm">
-                      {logs.map((log) => (
-                        <tr key={log.log_id} className="hover:bg-slate-800/30 transition-colors text-[11px]">
-                          <td className="px-6 py-3 text-slate-300 font-bold whitespace-nowrap">{log.game_info || `ID: ${log.game_id}`}</td>
-                          <td className="px-6 py-3 text-center">{log.inning_number}</td>
-                          <td className="px-6 py-3 uppercase">{log.half}</td>
-                          <td className="px-6 py-3 text-emerald-400 font-bold">{log.runs_scored}</td>
-                          <td className="px-6 py-3 text-blue-400">{log.baserunners}</td>
-                        </tr>
-                      ))}
+                      {logs.map((log) => {
+                        const weather = parseWeather(log.game_info);
+                        return (
+                          <tr key={log.log_id} className="hover:bg-slate-800/30 transition-colors text-[11px]">
+                            <td className="px-6 py-3 text-slate-300 font-bold whitespace-nowrap">
+                              <div className="flex flex-col">
+                                <span>{weather?.cleanTitle || log.game_info || `ID: ${log.game_id}`}</span>
+                                {weather && (
+                                  <div className="flex gap-2 mt-1 text-[9px] text-slate-500 font-medium items-center">
+                                    <span className="flex items-center gap-0.5"><Thermometer size={10} className="text-rose-400/60" /> {weather.temp}</span>
+                                    <span className="flex items-center gap-0.5"><Wind size={10} className="text-blue-400/60" /> {weather.wind}</span>
+                                  </div>
+                                )}
+                              </div>
+                            </td>
+                            <td className="px-6 py-3 text-center">{log.inning_number}</td>
+                            <td className="px-6 py-3 uppercase">{log.half}</td>
+                            <td className="px-6 py-3 text-emerald-400 font-bold">{log.runs_scored}</td>
+                            <td className="px-6 py-3 text-blue-400">{log.baserunners}</td>
+                          </tr>
+                        );
+                      })}
                     </tbody>
                   </table>
                 </div>

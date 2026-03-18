@@ -1,33 +1,13 @@
-import { NextResponse } from "next/server";
-import fs from "fs";
-import path from "path";
+import { NextResponse } from 'next/server';
+import { query } from '@/lib/db';
 
 export async function GET() {
-  const beads: any[] = [];
-  const searchDirs = [
-    "/app/.beads",
-    "/Users/grantbest/Documents/Active/BettingApp/.beads",
-    "/Users/grantbest/Documents/Active/Homelab/.beads"
-  ];
-
-  for (const dir of searchDirs) {
-    try {
-      if (fs.existsSync(dir)) {
-        const files = fs.readdirSync(dir);
-        for (const file of files) {
-          if (file.endsWith(".json")) {
-            const data = JSON.parse(fs.readFileSync(path.join(dir, file), "utf-8"));
-            beads.push(data);
-          }
-        }
-      }
-    } catch (err) {
-      console.error(`Error reading beads from ${dir}`, err);
-    }
+  try {
+    const res = await query('SELECT * FROM inning_logs ORDER BY last_updated DESC LIMIT 50');
+    return NextResponse.json(res.rows);
+  } catch (error) {
+    console.error(error);
+    return NextResponse.json({ error: 'Database error' }, { status: 500 });
   }
-
-  // Sort by date descending
-  beads.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
-
-  return NextResponse.json(beads);
 }
+

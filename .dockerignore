@@ -1,0 +1,9 @@
+.venv/
+.git/
+.github/
+__pycache__/
+*.log
+*.pid
+frontend/node_modules/
+frontend/.next/
+.DS_Store

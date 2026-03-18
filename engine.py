@@ -8,6 +8,7 @@ import json
 from datetime import datetime
 from discord_webhook import DiscordWebhookAlert
 from ai_orchestrator import AIAgent
+from services.weather_service import WeatherService
 
 # Allow overriding the MLB API Base URL for mock testing
 MLB_API_BASE_URL = os.getenv("MLB_API_BASE_URL")
@@ -234,7 +235,7 @@ def log_bet(game_id, system, odds, stake, ai_insight=None, game_info=None):
     finally:
         if conn: conn.close()
 
-def monitor_games(alerter, redis_client, ai_agent=None):
+def monitor_games(alerter, redis_client, ai_agent=None, weather_service=None):
     """Main monitoring loop for dynamic rules."""
     active_game_ids = get_active_games()
     print(f"Monitoring {len(active_game_ids)} active games: {active_game_ids}", flush=True)
@@ -257,6 +258,15 @@ def monitor_games(alerter, redis_client, ai_agent=None):
             home_id = teams.get('home', {}).get('id')
             pitching_team_id = home_id if is_top else away_id
             
+            # Fetch Weather Data
+            weather_str = ""
+            if weather_service:
+                venue_name = game.get('gameData', {}).get('venue', {}).get('name', 'Unknown')
+                weather = weather_service.get_weather_data(venue_name)
+                temp = weather.get('temp', '??')
+                wind = weather.get('wind', '??')
+                weather_str = f" | 🌡️ {temp}°F | 💨 {wind}mph"
+
             conn = get_db_connection()
             cur = conn.cursor()
             cur.execute("SELECT bullpen_era_rank FROM teams WHERE team_id = %s", (pitching_team_id,))
@@ -279,7 +289,7 @@ def monitor_games(alerter, redis_client, ai_agent=None):
             away_abbr = teams.get('away', {}).get('abbreviation', 'AWY')
             home_abbr = teams.get('home', {}).get('abbreviation', 'HM')
             game_date = datetime.now().strftime('%-m/%-d')
-            game_info = f"{home_abbr} Vs {away_abbr} - {game_date}"
+            game_info = f"{home_abbr} Vs {away_abbr} - {game_date}{weather_str}"
 
             # Update Inning Logs
             for idx, inning in enumerate(innings):
@@ -326,6 +336,7 @@ if __name__ == "__main__":
     alerter = DiscordWebhookAlert(webhook_url) if webhook_url else None
     
     redis_client = get_redis_client()
+    weather_service = WeatherService()
     
     ai_agent = None
     try:
@@ -335,5 +346,5 @@ if __name__ == "__main__":
         print(f"⚠️ AI Orchestrator failed to initialize: {e}")
     
     while True:
-        monitor_games(alerter, redis_client, ai_agent)
+        monitor_games(alerter, redis_client, ai_agent, weather_service)
         time.sleep(60) # Scan every minute
