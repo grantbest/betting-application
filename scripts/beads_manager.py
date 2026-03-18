@@ -11,7 +11,7 @@ def get_beads_dir():
     try:
         # Try to find it relative to this file
         current_path = Path(__file__).parent.absolute()
-    except:
+    except Exception:
         # Fallback for environments where __file__ might be weird
         current_path = Path(".").absolute()
 
