@@ -10,11 +10,6 @@ from discord_webhook import DiscordWebhookAlert
 from ai_orchestrator import AIAgent
 from services.weather_service import WeatherService
 
-# Allow overriding the MLB API Base URL for mock testing
-MLB_API_BASE_URL = os.getenv("MLB_API_BASE_URL")
-if MLB_API_BASE_URL:
-    mlb.BASE_URL = MLB_API_BASE_URL
-
 # Operator mapping for RuleEvaluator
 OPS = {
     "==": operator.eq,
