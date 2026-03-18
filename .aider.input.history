@@ -86,3 +86,19 @@
 +STRICT REQUIREMENT: You MUST implement or update a corresponding test file in the 'tests/' directory to verify this change. Code without tests will be rejected by the Integration Crucible.
 +
 +STRICT PEP 8 COMPLIANCE: Do NOT use bare 'except:' blocks. Always use 'except Exception:' or a specific exception class. Bare excepts will be rejected by the Linting Gate.
+
+# 2026-03-18 21:45:32.886593
++TASK: [STORY] Integrate Reliable Weather API
++INSTRUCTION: Integrate a selected reliable weather API into the system. This story includes ensuring API key management and security, as well as implementing real-time updates to the weather data in the system with minimal latency.
++
++STRICT REQUIREMENT: You MUST implement or update a corresponding test file in the 'tests/' directory to verify this change. Code without tests will be rejected by the Integration Crucible.
++
++STRICT PEP 8 COMPLIANCE: Do NOT use bare 'except:' blocks. Always use 'except Exception:' or a specific exception class. Bare excepts will be rejected by the Linting Gate.
+
+# 2026-03-18 21:45:32.888496
++TASK: [STORY] Integrate Reliable Weather API
++INSTRUCTION: Integrate a selected reliable weather API into the system. This story includes ensuring API key management and security, as well as implementing real-time updates to the weather data in the system with minimal latency.
++
++STRICT REQUIREMENT: You MUST implement or update a corresponding test file in the 'tests/' directory to verify this change. Code without tests will be rejected by the Integration Crucible.
++
++STRICT PEP 8 COMPLIANCE: Do NOT use bare 'except:' blocks. Always use 'except Exception:' or a specific exception class. Bare excepts will be rejected by the Linting Gate.
