@@ -20,7 +20,7 @@ class WeatherService:
             if response.status_code == 200:
                 return response.json()
             return {"status": "limited", "temp": 72, "wind": 5} # Fallback
-        except:
+        except Exception:
             return {"status": "limited", "temp": 72, "wind": 5} # Fallback
 
     def annotate_events_with_weather(self, events):
