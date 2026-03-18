@@ -38,3 +38,19 @@
 +STRICT REQUIREMENT: You MUST implement or update a corresponding test file in the 'tests/' directory to verify this change. Code without tests will be rejected by the Integration Crucible.
 +
 +STRICT PEP 8 COMPLIANCE: Do NOT use bare 'except:' blocks. Always use 'except Exception:' or a specific exception class. Bare excepts will be rejected by the Linting Gate.
+
+# 2026-03-18 21:40:10.800002
++TASK: [STORY] Design Structured Weather Data Model
++INSTRUCTION: Create a structured weather data model to be implemented in the `game_weather` table with fields: `temperature`, `wind_speed`, `conditions`, and `timestamp`. Requirements include ensuring the database schema can be migrated to the new structure without data loss and that AI logic queries utilize the structured weather data directly.
++
++STRICT REQUIREMENT: You MUST implement or update a corresponding test file in the 'tests/' directory to verify this change. Code without tests will be rejected by the Integration Crucible.
++
++STRICT PEP 8 COMPLIANCE: Do NOT use bare 'except:' blocks. Always use 'except Exception:' or a specific exception class. Bare excepts will be rejected by the Linting Gate.
+
+# 2026-03-18 21:40:10.800624
++TASK: [STORY] Design Structured Weather Data Model
++INSTRUCTION: Create a structured weather data model to be implemented in the `game_weather` table with fields: `temperature`, `wind_speed`, `conditions`, and `timestamp`. Requirements include ensuring the database schema can be migrated to the new structure without data loss and that AI logic queries utilize the structured weather data directly.
++
++STRICT REQUIREMENT: You MUST implement or update a corresponding test file in the 'tests/' directory to verify this change. Code without tests will be rejected by the Integration Crucible.
++
++STRICT PEP 8 COMPLIANCE: Do NOT use bare 'except:' blocks. Always use 'except Exception:' or a specific exception class. Bare excepts will be rejected by the Linting Gate.
