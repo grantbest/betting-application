@@ -10,3 +10,31 @@
 +INSTRUCTION: We need to incorporate real-time weather data into the betting application engine to adjust betting strategies based on conditions (wind, rain, temp). Implement a weather service and integrate it into the game scanning logic. MUST INCLUDE TESTS.
 +
 +STRICT REQUIREMENT: You MUST implement or update a corresponding test file in the 'tests/' directory to verify this change. Code without tests will be rejected by the Integration Crucible.
+
+# 2026-03-18 19:27:33.882498
++TASK: Integrate Weather Service into Engine and UI
++INSTRUCTION: **Objective:** Integrate the existing `WeatherService` into the main engine and display weather data in the frontend dashboard.
++
++**Requirements:**
++1. **Engine Integration:** Update `engine.py` to initialize `WeatherService` and annotate game state with weather data (temp, wind, conditions).
++2. **Database Logging:** Ensure weather data is included in `inning_logs` or `bet_tracking` if relevant for AI insights.
++3. **Frontend Display:** Update the Next.js dashboard to show weather conditions for active games.
++4. **Resilience:** The engine must not crash if the weather API is unavailable (use fallbacks).
++
++STRICT REQUIREMENT: You MUST implement or update a corresponding test file in the 'tests/' directory to verify this change. Code without tests will be rejected by the Integration Crucible.
++
++STRICT PEP 8 COMPLIANCE: Do NOT use bare 'except:' blocks. Always use 'except Exception:' or a specific exception class. Bare excepts will be rejected by the Linting Gate.
+
+# 2026-03-18 19:27:33.883366
++TASK: Integrate Weather Service into Engine and UI
++INSTRUCTION: **Objective:** Integrate the existing `WeatherService` into the main engine and display weather data in the frontend dashboard.
++
++**Requirements:**
++1. **Engine Integration:** Update `engine.py` to initialize `WeatherService` and annotate game state with weather data (temp, wind, conditions).
++2. **Database Logging:** Ensure weather data is included in `inning_logs` or `bet_tracking` if relevant for AI insights.
++3. **Frontend Display:** Update the Next.js dashboard to show weather conditions for active games.
++4. **Resilience:** The engine must not crash if the weather API is unavailable (use fallbacks).
++
++STRICT REQUIREMENT: You MUST implement or update a corresponding test file in the 'tests/' directory to verify this change. Code without tests will be rejected by the Integration Crucible.
++
++STRICT PEP 8 COMPLIANCE: Do NOT use bare 'except:' blocks. Always use 'except Exception:' or a specific exception class. Bare excepts will be rejected by the Linting Gate.
