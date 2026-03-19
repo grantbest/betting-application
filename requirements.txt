@@ -4,3 +4,5 @@ redis
 requests
 ollama
 temporalio
+anthropic
+httpx
