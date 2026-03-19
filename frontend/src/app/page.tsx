@@ -206,11 +206,17 @@ export default function Dashboard() {
             >
               <ShieldCheck size={16} className="text-blue-400" /> <span className="hidden sm:inline">Admin</span>
             </Link>
-            <Link 
+            <Link
               href="/health"
               className="bg-blue-600/10 border border-blue-500/20 hover:bg-blue-600/20 text-blue-400 px-4 py-2 rounded-lg text-sm transition-all flex items-center gap-2"
             >
-              <Activity size={16} /> <span className="hidden sm:inline">Health Telemetry</span></Link><Link href="/health" className="bg-blue-600/10 border border-blue-500/20 hover:bg-blue-600/20 text-blue-400 px-4 py-2 rounded-lg text-sm transition-all flex items-center gap-2"><Settings size={16} /> <span className="hidden sm:inline">Rules Engine</span>
+              <Activity size={16} /> <span className="hidden sm:inline">Health Telemetry</span>
+            </Link>
+            <Link
+              href="/rules"
+              className="bg-blue-600/10 border border-blue-500/20 hover:bg-blue-600/20 text-blue-400 px-4 py-2 rounded-lg text-sm transition-all flex items-center gap-2"
+            >
+              <Settings size={16} /> <span className="hidden sm:inline">Rules Engine</span>
             </Link>
             <div className="flex flex-col gap-1">
               <button 

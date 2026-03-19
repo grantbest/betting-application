@@ -158,14 +158,14 @@ def init_database():
 
                 # Demo History
                 history = [
-                    (744880, 'NR2I Regression', -115, 0.05, 'WON', "Low scoring environment with elite bullpen relief.", datetime.now() - timedelta(hours=2)),
-                    (746174, 'Big Inning Momentum', 105, 0.06, 'WON', "Momentum carried into the next frame as predicted.", datetime.now() - timedelta(hours=3)),
-                    (745201, '5th Inning Fatigue', -110, 0.03, 'PENDING', "Starter pitch count exceeds 85; 3rd time through order.", datetime.now() - timedelta(minutes=5))
+                    (744880, 'NR2I Regression', -115, 0.05, 'WON', "Low scoring environment with elite bullpen relief.", "BAL Vs NYY - 3/13 | 🌡️ 68°F | 💨 10mph", datetime.now() - timedelta(hours=2)),
+                    (746174, 'Big Inning Momentum', 105, 0.06, 'WON', "Momentum carried into the next frame as predicted.", "LAD Vs SF - 3/14 | 🌡️ 72°F | 💨 5mph", datetime.now() - timedelta(hours=3)),
+                    (745201, '5th Inning Fatigue', -110, 0.03, 'PENDING', "Starter pitch count exceeds 85; 3rd time through order.", "LAD Vs SF - 3/13 | 🌡️ 71°F | 💨 8mph", datetime.now() - timedelta(minutes=5))
                 ]
-                for g_id, sys, odds, stake, res, ai, dt in history:
+                for g_id, sys, odds, stake, res, ai, info, dt in history:
                     cur.execute(
-                        "INSERT INTO bet_tracking (game_id, system_triggered, odds_taken, stake, result, ai_insight, created_at) VALUES (%s, %s, %s, %s, %s, %s, %s)",
-                        (g_id, sys, odds, stake, res, ai, dt)
+                        "INSERT INTO bet_tracking (game_id, system_triggered, odds_taken, stake, result, ai_insight, game_info, created_at) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)",
+                        (g_id, sys, odds, stake, res, ai, info, dt)
                     )
 
                 conn.commit()

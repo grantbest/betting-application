@@ -1,33 +1,55 @@
-import requests
-from datetime import datetime
+import statsapi as mlb
+import re
 
 class WeatherService:
     """
-    Service to fetch real-time weather data and annotate events.
+    Service to fetch real-time weather data from the MLB Stats API.
     """
-    def __init__(self, api_key=None, base_url="http://api.weatherprovider.com"):
+    def __init__(self, api_key=None, base_url=None):
+        # API Key is currently not needed as we use MLB Stats API
         self.api_key = api_key
         self.base_url = base_url
 
-    def get_weather_data(self, location):
-        # Simulated or real API call
-        # In a real environment, this would hit OpenWeatherMap or similar
+    def get_weather_data(self, game_id):
+        """Fetches weather directly from the MLB game object."""
         try:
-            response = requests.get(f"{self.base_url}/weather", params={
-                'q': location,
-                'appid': self.api_key
-            }, timeout=5)
-            if response.status_code == 200:
-                return response.json()
-            return {"status": "limited", "temp": 72, "wind": 5} # Fallback
-        except Exception:
-            return {"status": "limited", "temp": 72, "wind": 5} # Fallback
+            game = mlb.get('game', {'gamePk': game_id})
+            boxscore_info = game.get('liveData', {}).get('boxscore', {}).get('info', [])
+            
+            temp = None
+            wind = None
+            conditions = "Clear"
+
+            for entry in boxscore_info:
+                label = entry.get('label')
+                value = entry.get('value')
+                
+                if label == 'Weather':
+                    # Value format: '69 degrees, Partly Cloudy.'
+                    temp_match = re.search(r'(\d+) degrees', value)
+                    if temp_match:
+                        temp = int(temp_match.group(1))
+                    
+                    cond_match = re.search(r'degrees, (.*)\.', value)
+                    if cond_match:
+                        conditions = cond_match.group(1)
+                
+                elif label == 'Wind':
+                    # Value format: '15 mph, L To R.'
+                    wind_match = re.search(r'(\d+) mph', value)
+                    if wind_match:
+                        wind = int(wind_match.group(1))
+
+            return {
+                "temp": temp or 72,
+                "wind": wind or 5,
+                "conditions": conditions,
+                "status": "real-time" if temp else "default"
+            }
+        except Exception as e:
+            print(f"Error fetching weather from MLB API: {e}")
+            return {"status": "error", "temp": 72, "wind": 5, "conditions": "Clear"}
 
     def annotate_events_with_weather(self, events):
-        annotated_events = []
-        for event in events:
-            location = event.get('location', 'Unknown')
-            weather = self.get_weather_data(location)
-            event['weather'] = weather
-            annotated_events.append(event)
-        return annotated_events
+        # Legacy support if needed
+        return events
