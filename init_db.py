@@ -14,9 +14,9 @@ DEFAULT_RULES = [
             "logic": "AND",
             "conditions": [
                 {"attribute": "inning", "operator": "==", "value": 2},
-                {"attribute": "runs_scored_half", "operator": "==", "value": 0}
-            ]
-        }
+                {"attribute": "runs_scored_half", "operator": "==", "value": 0},
+            ],
+        },
     },
     {
         "name": "Big Inning Momentum",
@@ -26,9 +26,9 @@ DEFAULT_RULES = [
             "logic": "AND",
             "conditions": [
                 {"attribute": "runs_scored_half", "operator": ">=", "value": 3},
-                {"attribute": "baserunners", "operator": ">=", "value": 4}
-            ]
-        }
+                {"attribute": "baserunners", "operator": ">=", "value": 4},
+            ],
+        },
     },
     {
         "name": "5th Inning Fatigue",
@@ -38,9 +38,9 @@ DEFAULT_RULES = [
             "logic": "AND",
             "conditions": [
                 {"attribute": "inning", "operator": "==", "value": 5},
-                {"attribute": "score_diff", "operator": ">=", "value": 0}
-            ]
-        }
+                {"attribute": "score_diff", "operator": ">=", "value": 0},
+            ],
+        },
     },
     {
         "name": "Late Bullpen",
@@ -50,11 +50,16 @@ DEFAULT_RULES = [
             "logic": "AND",
             "conditions": [
                 {"attribute": "inning", "operator": "==", "value": 8},
-                {"attribute": "pitching_team_bullpen_rank", "operator": "<=", "value": 20}
-            ]
-        }
-    }
+                {
+                    "attribute": "pitching_team_bullpen_rank",
+                    "operator": "<=",
+                    "value": 20,
+                },
+            ],
+        },
+    },
 ]
+
 
 def init_database():
     """
@@ -62,14 +67,14 @@ def init_database():
     Supports individual env vars or DATABASE_URL.
     """
     db_url = os.getenv("DATABASE_URL")
-    
+
     if db_url:
         result = urlparse(db_url)
         db_user = result.username
         db_pass = result.password
         db_host = result.hostname
         db_port = result.port or 5432
-        db_name = result.path.lstrip('/')
+        db_name = result.path.lstrip("/")
     else:
         db_name = os.getenv("DB_NAME", "mlb_engine")
         db_host = os.getenv("DB_HOST", "localhost")
@@ -78,7 +83,7 @@ def init_database():
         db_pass = os.getenv("DB_PASS", "password123")
 
     print(f"Connecting to database {db_name} on {db_host}:{db_port}...")
-    
+
     max_retries = 5
     for i in range(max_retries):
         try:
@@ -88,11 +93,13 @@ def init_database():
                 database="postgres",
                 user=db_user,
                 password=db_pass,
-                port=db_port
+                port=db_port,
             )
             conn.autocommit = True
             cur = conn.cursor()
-            cur.execute(f"SELECT 1 FROM pg_catalog.pg_database WHERE datname = '{db_name}'")
+            cur.execute(
+                f"SELECT 1 FROM pg_catalog.pg_database WHERE datname = '{db_name}'"
+            )
             exists = cur.fetchone()
             if not exists:
                 cur.execute(f"CREATE DATABASE {db_name}")
@@ -109,17 +116,17 @@ def init_database():
                     database=db_name,
                     user=db_user,
                     password=db_pass,
-                    port=db_port
+                    port=db_port,
                 )
             cur = conn.cursor()
-            
-            with open('schema.sql', 'r') as f:
+
+            with open("schema.sql", "r") as f:
                 schema_sql = f.read()
-                
+
             cur.execute(schema_sql)
             conn.commit()
             print(f"✅ Database {db_name} initialized successfully with schema.sql")
-            
+
             # Check if rules exist, if not seed them (Only in Development)
             app_env = os.getenv("APP_ENV", "development")
             cur.execute("SELECT COUNT(*) FROM betting_rules")
@@ -128,60 +135,100 @@ def init_database():
                 for rule in DEFAULT_RULES:
                     cur.execute(
                         "INSERT INTO betting_rules (name, description, status, conditions_json) VALUES (%s, %s, %s, %s)",
-                        (rule['name'], rule['description'], rule['status'], json.dumps(rule['conditions_json']))
+                        (
+                            rule["name"],
+                            rule["description"],
+                            rule["status"],
+                            json.dumps(rule["conditions_json"]),
+                        ),
                     )
-                
+
                 # Also seed some demo history if in development
                 print("Seeding demo history (Inning Logs & Bet History)...")
-                
+
                 # Demo Teams
                 teams_data = [
-                    (110, 'BAL', 5), (114, 'CLE', 1), (119, 'LAD', 3), (136, 'SEA', 2)
+                    (110, "BAL", 5),
+                    (114, "CLE", 1),
+                    (119, "LAD", 3),
+                    (136, "SEA", 2),
                 ]
                 for team_id, abbr, rank in teams_data:
                     cur.execute(
                         "INSERT INTO teams (team_id, abbreviation, bullpen_era_rank) VALUES (%s, %s, %s) ON CONFLICT (team_id) DO NOTHING",
-                        (team_id, abbr, rank)
+                        (team_id, abbr, rank),
                     )
 
                 # Demo Logs
                 logs = [
-                    (744880, 1, 'top', 1, 2, "BAL Vs NYY - 3/13"),
-                    (744880, 1, 'bottom', 2, 3, "BAL Vs NYY - 3/13"),
-                    (745201, 4, 'bottom', 0, 4, "LAD Vs SF - 3/13")
+                    (744880, 1, "top", 1, 2, "BAL Vs NYY - 3/13"),
+                    (744880, 1, "bottom", 2, 3, "BAL Vs NYY - 3/13"),
+                    (745201, 4, "bottom", 0, 4, "LAD Vs SF - 3/13"),
                 ]
                 for g_id, inn, half, runs, runners, info in logs:
                     cur.execute(
                         "INSERT INTO inning_logs (game_id, inning_number, half, runs_scored, baserunners, game_info) VALUES (%s, %s, %s, %s, %s, %s) ON CONFLICT DO NOTHING",
-                        (g_id, inn, half, runs, runners, info)
+                        (g_id, inn, half, runs, runners, info),
                     )
 
                 # Demo History
                 history = [
-                    (744880, 'NR2I Regression', -115, 0.05, 'WON', "Low scoring environment with elite bullpen relief.", "BAL Vs NYY - 3/13 | 🌡️ 68°F | 💨 10mph", datetime.now() - timedelta(hours=2)),
-                    (746174, 'Big Inning Momentum', 105, 0.06, 'WON', "Momentum carried into the next frame as predicted.", "LAD Vs SF - 3/14 | 🌡️ 72°F | 💨 5mph", datetime.now() - timedelta(hours=3)),
-                    (745201, '5th Inning Fatigue', -110, 0.03, 'PENDING', "Starter pitch count exceeds 85; 3rd time through order.", "LAD Vs SF - 3/13 | 🌡️ 71°F | 💨 8mph", datetime.now() - timedelta(minutes=5))
+                    (
+                        744880,
+                        "NR2I Regression",
+                        -115,
+                        0.05,
+                        "WON",
+                        "Low scoring environment with elite bullpen relief.",
+                        "BAL Vs NYY - 3/13 | 🌡️ 68°F | 💨 10mph",
+                        datetime.now() - timedelta(hours=2),
+                    ),
+                    (
+                        746174,
+                        "Big Inning Momentum",
+                        105,
+                        0.06,
+                        "WON",
+                        "Momentum carried into the next frame as predicted.",
+                        "LAD Vs SF - 3/14 | 🌡️ 72°F | 💨 5mph",
+                        datetime.now() - timedelta(hours=3),
+                    ),
+                    (
+                        745201,
+                        "5th Inning Fatigue",
+                        -110,
+                        0.03,
+                        "PENDING",
+                        "Starter pitch count exceeds 85; 3rd time through order.",
+                        "LAD Vs SF - 3/13 | 🌡️ 71°F | 💨 8mph",
+                        datetime.now() - timedelta(minutes=5),
+                    ),
                 ]
                 for g_id, sys, odds, stake, res, ai, info, dt in history:
                     cur.execute(
                         "INSERT INTO bet_tracking (game_id, system_triggered, odds_taken, stake, result, ai_insight, game_info, created_at) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)",
-                        (g_id, sys, odds, stake, res, ai, info, dt)
+                        (g_id, sys, odds, stake, res, ai, info, dt),
                     )
 
                 conn.commit()
                 print(f"✅ Seeded demo data for {app_env} environment.")
             else:
-                print(f"Skipping demo data seeding for {app_env} environment (or rules already exist).")
+                print(
+                    f"Skipping demo data seeding for {app_env} environment (or rules already exist)."
+                )
 
             cur.close()
             conn.close()
             break
         except Exception as e:
-            print(f"Attempt {i+1}/{max_retries} failed: {e}")
+            print(f"Attempt {i + 1}/{max_retries} failed: {e}")
             if i < max_retries - 1:
                 time.sleep(2)
             else:
-                print(f"❌ Failed to initialize database {db_name} after {max_retries} attempts.")
+                print(
+                    f"❌ Failed to initialize database {db_name} after {max_retries} attempts."
+                )
+
 
 if __name__ == "__main__":
     init_database()

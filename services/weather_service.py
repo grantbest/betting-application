@@ -1,10 +1,12 @@
 import statsapi as mlb
 import re
 
+
 class WeatherService:
     """
     Service to fetch real-time weather data from the MLB Stats API.
     """
+
     def __init__(self, api_key=None, base_url=None):
         # API Key is currently not needed as we use MLB Stats API
         self.api_key = api_key
@@ -13,30 +15,30 @@ class WeatherService:
     def get_weather_data(self, game_id):
         """Fetches weather directly from the MLB game object."""
         try:
-            game = mlb.get('game', {'gamePk': game_id})
-            boxscore_info = game.get('liveData', {}).get('boxscore', {}).get('info', [])
-            
+            game = mlb.get("game", {"gamePk": game_id})
+            boxscore_info = game.get("liveData", {}).get("boxscore", {}).get("info", [])
+
             temp = None
             wind = None
             conditions = "Clear"
 
             for entry in boxscore_info:
-                label = entry.get('label')
-                value = entry.get('value')
-                
-                if label == 'Weather':
+                label = entry.get("label")
+                value = entry.get("value")
+
+                if label == "Weather":
                     # Value format: '69 degrees, Partly Cloudy.'
-                    temp_match = re.search(r'(\d+) degrees', value)
+                    temp_match = re.search(r"(\d+) degrees", value)
                     if temp_match:
                         temp = int(temp_match.group(1))
-                    
-                    cond_match = re.search(r'degrees, (.*)\.', value)
+
+                    cond_match = re.search(r"degrees, (.*)\.", value)
                     if cond_match:
                         conditions = cond_match.group(1)
-                
-                elif label == 'Wind':
+
+                elif label == "Wind":
                     # Value format: '15 mph, L To R.'
-                    wind_match = re.search(r'(\d+) mph', value)
+                    wind_match = re.search(r"(\d+) mph", value)
                     if wind_match:
                         wind = int(wind_match.group(1))
 
@@ -44,7 +46,7 @@ class WeatherService:
                 "temp": temp or 72,
                 "wind": wind or 5,
                 "conditions": conditions,
-                "status": "real-time" if temp else "default"
+                "status": "real-time" if temp else "default",
             }
         except Exception as e:
             print(f"Error fetching weather from MLB API: {e}")
