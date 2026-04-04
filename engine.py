@@ -186,15 +186,17 @@ def update_team_data():
     except Exception as e:
         print(f"Error updating teams: {e}")
 
-def log_bet(game_id, system, odds, stake, ai_insight=None, game_info=None):
-    """Saves a triggered betting opportunity to the database for tracking."""
+def log_bet(game_id, system, odds, stake, ai_insight=None, game_info=None, clv=None, ai_trace=None):
+    """Saves a triggered betting opportunity to the database with V2.0 analytics."""
     conn = None
     try:
         conn = get_db_connection()
         cur = conn.cursor()
         cur.execute(
-            "INSERT INTO bet_tracking (game_id, system_triggered, odds_taken, stake, ai_insight, game_info) VALUES (%s, %s, %s, %s, %s, %s)",
-            (game_id, system, odds, stake, ai_insight, game_info)
+            """INSERT INTO bet_tracking 
+               (game_id, system_triggered, odds_taken, stake, ai_insight, game_info, clv, ai_trace) 
+               VALUES (%s, %s, %s, %s, %s, %s, %s, %s)""",
+            (game_id, system, odds, stake, ai_insight, game_info, clv, ai_trace)
         )
         conn.commit()
         cur.close()
@@ -247,11 +249,14 @@ def get_active_rules():
         if conn:
             conn.close()
 
+from services.quant_service import QuantService
+
 def monitor_games(alerter, redis_client, ai_agent=None, weather_service=None):
-    """Main monitoring loop for dynamic rules."""
+    """Main monitoring loop for dynamic rules with V2.0 Quant Reasoning."""
     active_game_ids = get_active_games()
     print(f"Monitoring {len(active_game_ids)} active games: {active_game_ids}", flush=True)
     rules = get_active_rules()
+    quant_service = QuantService() # V2.0 Memory Bank
     
     if not rules:
         return
@@ -265,7 +270,7 @@ def monitor_games(alerter, redis_client, ai_agent=None, weather_service=None):
             current_inning = linescore.get('currentInning', 1)
             is_top = linescore.get('isTopInning', True)
             
-            # Identify teams and bullpen rank
+            # Identify teams and ballpark info
             game_data = game.get('gameData', {})
             teams = game_data.get('teams', {})
             status = game_data.get('status', {}).get('abstractGameState')
@@ -273,26 +278,23 @@ def monitor_games(alerter, redis_client, ai_agent=None, weather_service=None):
             away_id = teams.get('away', {}).get('id')
             home_id = teams.get('home', {}).get('id')
             
-            # Fetch Weather Data (Always do this for all active games)
+            # Fetch Weather Data
+            weather_data = {"temp": 72, "wind": 5, "wind_direction": "Calm", "conditions": "Clear"}
             weather_str = ""
             if weather_service:
-                weather = weather_service.get_weather_data(game_id)
-                temp = weather.get('temp')
-                wind = weather.get('wind')
-                cond = weather.get('conditions', 'Clear')
-                
-                # Save structured data
+                weather_data = weather_service.get_weather_data(game_id)
+                temp = weather_data.get('temp')
+                wind = weather_data.get('wind')
+                cond = weather_data.get('conditions', 'Clear')
                 if temp is not None:
                     log_weather(game_id, temp, wind, cond)
                     weather_str = f" | 🌡️ {temp}°F | 💨 {wind}mph"
-                else:
-                    weather_str = " | 🌡️ ??°F | 💨 ??mph"
 
-            # Skip detailed processing if the game hasn't started
             if status == 'Preview':
                 continue
 
             pitching_team_id = home_id if is_top else away_id
+            venue_id = game_data.get('venue', {}).get('id')
 
             conn = get_db_connection()
             cur = conn.cursor()
@@ -302,15 +304,19 @@ def monitor_games(alerter, redis_client, ai_agent=None, weather_service=None):
             cur.close()
             conn.close()
 
-            # Construct State for Evaluator
+            # Construct Multi-Dimensional State for Evaluator and Quant Search
             state = {
                 "inning": current_inning,
                 "score_diff": linescore.get('home', {}).get('runs', 0) - linescore.get('away', {}).get('runs', 0),
                 "pitching_team_bullpen_rank": bullpen_rank,
-                "runs_scored_half": linescore.get('home' if not is_top else 'away', {}).get('runs', 0),
                 "baserunners": (1 if linescore.get('offense', {}).get('first') else 0) + 
                               (1 if linescore.get('offense', {}).get('second') else 0) + 
-                              (1 if linescore.get('offense', {}).get('third') else 0)
+                              (1 if linescore.get('offense', {}).get('third') else 0),
+                "temp": weather_data.get('temp'),
+                "wind_speed": weather_data.get('wind'),
+                "wind_direction": weather_data.get('wind_direction'),
+                "venue_id": venue_id,
+                "is_night_game": game_data.get('isNightGame', False)
             }
 
             away_abbr = teams.get('away', {}).get('abbreviation', 'AWY')
@@ -332,8 +338,7 @@ def monitor_games(alerter, redis_client, ai_agent=None, weather_service=None):
                     continue
                 
                 if RuleEvaluator.evaluate(rule['conditions'], state):
-                    status_prefix = "[DRY RUN] " if rule['status'] == 'DRY_RUN' else ""
-                    print(f"{status_prefix}Rule '{rule['name']}' triggered for {game_id}")
+                    print(f"Rule '{rule['name']}' triggered for {game_id}. Reason-Mode Activated.")
                     
                     config = rule['config'] or {}
                     p = config.get('p', 0.55)
@@ -341,14 +346,29 @@ def monitor_games(alerter, redis_client, ai_agent=None, weather_service=None):
                     stake = calculate_kelly(p, odds)
                     
                     ai_insight = None
+                    ai_trace = None
                     if ai_agent:
-                        print(f"Generating AI Insight for {rule['name']}...")
-                        ai_insight = ai_agent.generate_insight(rule['name'], state)
+                        # V2.0: Get historical context from DuckDB
+                        hist_context = quant_service.get_similarity_context(state)
+                        print(f"Retrieved historical context: {hist_context}")
+                        
+                        # Generate reasoning-backed insight (Gemma 4)
+                        raw_ai_output = ai_agent.generate_insight(rule['name'], state, hist_context)
+                        
+                        # Separate trace from insight for the database
+                        if "<channel>thought" in raw_ai_output or "<|thought|>" in raw_ai_output:
+                            # Simple split for the MVP
+                            parts = raw_ai_output.split("thought")
+                            if len(parts) > 1:
+                                ai_trace = parts[1].split("<")[0].strip() # Extract content inside tags
+                                ai_insight = raw_ai_output.split(">")[-1].strip() # Extract final answer
+                        else:
+                            ai_insight = raw_ai_output
                     
                     if rule['status'] == 'ACTIVE' and alerter:
-                        alerter.send_alert(rule['name'], game_id, "Dynamic Rule Trigger", odds, stake, ai_insight)
+                        alerter.send_alert(rule['name'], game_id, "Quant Strategy Trigger", odds, stake, ai_insight)
                     
-                    log_bet(game_id, rule['name'], odds, stake, ai_insight, game_info)
+                    log_bet(game_id, rule['name'], odds, stake, ai_insight, game_info, clv=0.0, ai_trace=ai_trace)
                     redis_client.setex(alert_key, 86400, "1")
 
         except Exception as e:

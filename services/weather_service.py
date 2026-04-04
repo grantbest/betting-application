@@ -18,6 +18,7 @@ class WeatherService:
             
             temp = None
             wind = None
+            wind_direction = "Calm"
             conditions = "Clear"
 
             for entry in boxscore_info:
@@ -32,17 +33,22 @@ class WeatherService:
                     
                     cond_match = re.search(r'degrees, (.*)\.', value)
                     if cond_match:
-                        conditions = cond_match.group(1)
+                        conditions = cond_match.group(1).strip()
                 
                 elif label == 'Wind':
-                    # Value format: '15 mph, L To R.'
+                    # Value format: '15 mph, L To R.' or '15 mph, Out To CF.'
                     wind_match = re.search(r'(\d+) mph', value)
                     if wind_match:
                         wind = int(wind_match.group(1))
+                    
+                    dir_match = re.search(r'mph, (.*)\.', value)
+                    if dir_match:
+                        wind_direction = dir_match.group(1).strip()
 
             return {
                 "temp": temp or 72,
                 "wind": wind or 5,
+                "wind_direction": wind_direction,
                 "conditions": conditions,
                 "status": "real-time" if temp else "default"
             }

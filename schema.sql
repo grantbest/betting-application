@@ -35,9 +35,12 @@ CREATE TABLE IF NOT EXISTS bet_tracking (
     game_info VARCHAR(100),
     system_triggered VARCHAR(50),
     odds_taken INT,
+    odds_closing INT, -- New in V2.0
     stake DECIMAL,
+    clv DECIMAL, -- New in V2.0 (Closing Line Value)
     result VARCHAR(10) DEFAULT 'PENDING',
     ai_insight TEXT,
+    ai_trace TEXT, -- New in V2.0 (Gemma 4 Thinking Trace)
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -76,7 +79,7 @@ CREATE TABLE IF NOT EXISTS agent_chat (
 -- Weather Table
 CREATE TABLE IF NOT EXISTS game_weather (
     id SERIAL PRIMARY KEY,
-    game_id INTEGER NOT NULL REFERENCES games(id),
+    game_id INTEGER NOT NULL REFERENCES games(id) UNIQUE,
     temperature DECIMAL(5, 2),
     wind_speed DECIMAL(5, 2),
     conditions VARCHAR(255),

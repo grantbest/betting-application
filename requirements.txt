@@ -6,3 +6,9 @@ ollama
 temporalio
 anthropic
 httpx
+duckdb
+polars
+pyarrow
+pytest
+pytest-mock
+nats-py

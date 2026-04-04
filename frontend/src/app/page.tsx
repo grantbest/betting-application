@@ -40,6 +40,8 @@ interface Bet {
   stake: number;
   result: string;
   ai_insight?: string;
+  ai_trace?: string;
+  clv?: number;
   created_at: string;
 }
 
@@ -69,6 +71,7 @@ interface AppConfig {
 export default function Dashboard() {
   const [activeTab, setActiveTab] = useState<'bets' | 'feed' | 'teams' | 'ai'>('bets');
   const [bets, setBets] = useState<Bet[]>([]);
+  const [selectedTrace, setSelectedTrace] = useState<string | null>(null);
   const [logs, setLogs] = useState<InningLog[]>([]);
   const [teams, setTeams] = useState<Team[]>([]);
   const [config, setConfig] = useState<AppConfig | null>(null);
@@ -277,35 +280,50 @@ export default function Dashboard() {
                       <tr>
                         <th className="px-6 py-4">Game</th>
                         <th className="px-6 py-4">System</th>
+                        <th className="px-6 py-4 text-center">Value</th>
                         <th className="px-6 py-4">Stake</th>
                         <th className="px-6 py-4">Status</th>
-                        <th className="px-6 py-4 text-center">AI</th>
+                        <th className="px-6 py-4 text-center">Logic</th>
                         <th className="px-6 py-4">Actions</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-800">
                       {loading ? (
-                        <tr><td colSpan={6} className="px-6 py-8 text-center text-slate-500">Loading...</td></tr>
+                        <tr><td colSpan={7} className="px-6 py-8 text-center text-slate-500">Loading...</td></tr>
                       ) : bets.length === 0 ? (
-                        <tr><td colSpan={6} className="px-6 py-8 text-center text-slate-500">No data.</td></tr>
+                        <tr><td colSpan={7} className="px-6 py-8 text-center text-slate-500">No data.</td></tr>
                       ) : (
                         bets.map((bet) => (
                           <tr key={bet.bet_id} className="hover:bg-slate-800/30 transition-colors group">
                             <td className="px-6 py-4 text-xs font-bold text-slate-300">{bet.game_info || `ID: ${bet.game_id}`}</td>
                             <td className="px-6 py-4 text-sm font-medium">{bet.system_triggered}</td>
+                            <td className="px-6 py-4 text-center">
+                                <ValueBadge clv={bet.clv} />
+                            </td>
                             <td className="px-6 py-4 text-sm">{(bet.stake * 100).toFixed(1)}%</td>
                             <td className="px-6 py-4">
                               <StatusBadge status={bet.result} />
                             </td>
                             <td className="px-6 py-4 text-center">
-                              {bet.ai_insight ? (
-                                <div className="relative group/insight inline-block">
-                                  <BrainCircuit size={18} className="text-indigo-400 cursor-help mx-auto" />
-                                  <div className="absolute right-0 bottom-full mb-2 w-64 p-3 bg-slate-900 border border-slate-700 rounded-lg shadow-xl opacity-0 group-hover/insight:opacity-100 transition-opacity pointer-events-none z-50 text-[10px] leading-relaxed text-slate-300 italic text-left">
-                                    {bet.ai_insight}
-                                  </div>
-                                </div>
-                              ) : <span className="text-slate-700">-</span>}
+                              <div className="flex justify-center gap-2">
+                                {bet.ai_insight && (
+                                    <div className="relative group/insight inline-block">
+                                    <MessageSquare size={16} className="text-slate-500 cursor-help" />
+                                    <div className="absolute right-0 bottom-full mb-2 w-64 p-3 bg-slate-900 border border-slate-700 rounded-lg shadow-xl opacity-0 group-hover/insight:opacity-100 transition-opacity pointer-events-none z-50 text-[10px] leading-relaxed text-slate-300 italic text-left">
+                                        {bet.ai_insight}
+                                    </div>
+                                    </div>
+                                )}
+                                {bet.ai_trace && (
+                                    <button 
+                                        onClick={() => setSelectedTrace(bet.ai_trace || null)}
+                                        className="text-indigo-400 hover:text-indigo-300 transition-colors"
+                                        title="View AI Thinking Trace"
+                                    >
+                                        <BrainCircuit size={18} />
+                                    </button>
+                                )}
+                              </div>
                             </td>
                             <td className="px-6 py-4">
                               {bet.result === 'PENDING' && (
@@ -337,21 +355,34 @@ export default function Dashboard() {
                           <p className="text-[10px] text-slate-500 uppercase font-bold tracking-wider">Game</p>
                           <p className="text-xs font-bold text-slate-200">{bet.game_info || `ID: ${bet.game_id}`}</p>
                         </div>
-                        <StatusBadge status={bet.result} />
+                        <div className="flex flex-col items-end gap-1">
+                            <StatusBadge status={bet.result} />
+                            <ValueBadge clv={bet.clv} />
+                        </div>
                       </div>
                       <div className="flex justify-between items-end">
                         <div>
                           <p className="text-[10px] text-slate-500 uppercase font-bold tracking-wider">System</p>
                           <p className="text-sm font-medium">{bet.system_triggered}</p>
                         </div>
-                        <div className="text-right">
-                          <p className="text-[10px] text-slate-500 uppercase font-bold tracking-wider">Stake</p>
-                          <p className="text-sm">{(bet.stake * 100).toFixed(1)}%</p>
+                        <div className="text-right flex gap-3 items-end">
+                          <div>
+                            <p className="text-[10px] text-slate-500 uppercase font-bold tracking-wider">Stake</p>
+                            <p className="text-sm">{(bet.stake * 100).toFixed(1)}%</p>
+                          </div>
+                          {bet.ai_trace && (
+                            <button 
+                                onClick={() => setSelectedTrace(bet.ai_trace || null)}
+                                className="bg-indigo-500/10 p-2 rounded text-indigo-400 border border-indigo-500/20"
+                            >
+                                <BrainCircuit size={16} />
+                            </button>
+                          )}
                         </div>
                       </div>
                       {bet.ai_insight && (
-                        <div className="bg-indigo-500/5 border border-indigo-500/10 p-3 rounded-lg flex gap-2">
-                          <BrainCircuit size={14} className="text-indigo-400 shrink-0 mt-0.5" />
+                        <div className="bg-slate-800/50 border border-slate-700/50 p-3 rounded-lg flex gap-2">
+                          <MessageSquare size={14} className="text-slate-500 shrink-0 mt-0.5" />
                           <p className="text-[10px] text-slate-400 leading-relaxed italic">{bet.ai_insight}</p>
                         </div>
                       )}
@@ -541,8 +572,59 @@ export default function Dashboard() {
           </div>
         </div>
       </div>
+
+      {/* V2.0 Thinking Trace Modal */}
+      {selectedTrace && (
+        <div className="fixed inset-0 bg-slate-950/90 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
+          <div className="bg-slate-900 border border-slate-800 w-full max-w-2xl rounded-2xl shadow-2xl flex flex-col max-h-[80vh]">
+            <div className="p-6 border-b border-slate-800 flex justify-between items-center bg-indigo-500/5">
+              <div className="flex items-center gap-3">
+                <BrainCircuit className="text-indigo-400" size={24} />
+                <div>
+                    <h3 className="text-xl font-bold">AI Thinking Trace</h3>
+                    <p className="text-[10px] text-slate-500 uppercase font-black tracking-widest">Gemma 4 Reasoning Model</p>
+                </div>
+              </div>
+              <button onClick={() => setSelectedTrace(null)} className="text-slate-500 hover:text-white transition-colors p-2">
+                <XCircle size={24} />
+              </button>
+            </div>
+            <div className="p-6 overflow-y-auto flex-1 font-mono text-sm leading-relaxed text-indigo-100 bg-slate-950/50">
+                <div className="space-y-4">
+                    {selectedTrace.split('\n').map((line, i) => (
+                        <p key={i} className={line.startsWith('Scenario') ? 'text-emerald-400 font-bold' : ''}>
+                            {line}
+                        </p>
+                    ))}
+                </div>
+            </div>
+            <div className="p-4 bg-slate-900 border-t border-slate-800 text-right">
+                <button 
+                    onClick={() => setSelectedTrace(null)}
+                    className="bg-slate-800 hover:bg-slate-700 text-white px-6 py-2 rounded-lg text-sm font-bold transition-all"
+                >
+                    Close Trace
+                </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
+}
+
+function ValueBadge({ clv }: { clv?: number }) {
+    if (clv === undefined || clv === null) return <span className="text-slate-800 text-[10px]">-</span>;
+    const isPositive = clv > 0;
+    return (
+        <span className={`px-1.5 py-0.5 rounded text-[10px] font-black border ${
+            isPositive 
+                ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' 
+                : 'bg-slate-500/10 text-slate-500 border-slate-500/20'
+        }`}>
+            {isPositive ? '+' : ''}{(clv * 100).toFixed(1)}%
+        </span>
+    );
 }
 
 function StatCard({ title, value, icon }: { title: string; value: string | number; icon: React.ReactNode }) {
