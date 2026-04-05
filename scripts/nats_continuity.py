@@ -1,6 +1,6 @@
 import asyncio
 import nats
-from nats.js.errors import TimeoutError
+from nats.errors import TimeoutError as FetchTimeoutError
 import json
 import os
 
